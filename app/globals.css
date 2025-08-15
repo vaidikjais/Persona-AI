@@ -1,26 +1,89 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* NEW PROFESSIONAL LIGHT THEME */
+    --background: 240 5% 96%; /* Cool Gray - easier on the eyes */
+    --foreground: 240 10% 4%; /* Near-black for text */
+
+    --card: 240 0% 100%; /* Pure white for cards to pop */
+    --card-foreground: 240 10% 4%;
+ 
+    --popover: 240 0% 100%;
+    --popover-foreground: 240 10% 4%;
+ 
+    --primary: 221 83% 53%; /* Strong, accessible blue for actions */
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 240 5% 90%; /* Lighter gray for secondary elements */
+    --secondary-foreground: 240 6% 10%;
+ 
+    --muted: 240 5% 90%;
+    --muted-foreground: 240 4% 46%;
+ 
+    --accent: 240 5% 90%;
+    --accent-foreground: 240 6% 10%;
+ 
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 240 6% 88%;
+    --input: 240 6% 88%;
+    --ring: 221 83% 53%;
+ 
+    --radius: 0.75rem; /* Slightly larger radius for a modern feel */
+  }
+ 
+  .dark {
+    /* NEW PROFESSIONAL DARK THEME */
+    --background: 222 84% 5%; /* Very dark, slightly blue gray */
+    --foreground: 210 40% 98%; /* Off-white for text */
+
+    --card: 222 84% 7%; /* Slightly lighter card background */
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222 84% 5%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 217 91% 60%; /* Vibrant blue for actions */
+    --primary-foreground: 222 47% 11%;
+ 
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+ 
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+    background-size: 400% 400%;
+    animation: gradient-animation 15s ease infinite;
+  }
+}
+
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
