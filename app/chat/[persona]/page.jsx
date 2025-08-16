@@ -1,19 +1,23 @@
 'use client';
 
-// All necessary imports are included here
 import React, { use, useEffect, useRef, useState } from 'react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { personas } from '@/lib/config/personas';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, LoaderCircle } from 'lucide-react';
+import { Send, LoaderCircle, Copy } from 'lucide-react';
 import { ChatHeader } from '@/components/chat-header';
 import { nanoid } from 'nanoid';
 
+// New imports for Markdown and Syntax Highlighting
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomOneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+
+
 export default function ChatPage({ params }) {
   const persona = personas[use(params).persona];
-
   if (!persona) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -23,6 +27,43 @@ export default function ChatPage({ params }) {
   }
   return <ChatInterface persona={persona} />;
 }
+
+
+// A new helper component to render styled code blocks
+function MarkdownCodeBlock({ inline, className, children }) {
+  const [isCopied, setIsCopied] = useState(false);
+  const match = /language-(\w+)/.exec(className || '');
+  const codeString = String(children).replace(/\n$/, '');
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(codeString);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  return !inline && match ? (
+    <div className="relative my-2 bg-[#282c34] rounded-md not-prose">
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-700/80 rounded-t-md">
+        <span className="text-xs text-gray-300">{match[1]}</span>
+        <button onClick={handleCopy} className="inline-flex items-center gap-1.5 text-xs text-gray-300 hover:text-white">
+          {isCopied ? <><Copy className="h-3 w-3" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy code</>}
+        </button>
+      </div>
+      <SyntaxHighlighter
+        style={atomOneDark}
+        language={match[1]}
+        PreTag="div"
+        customStyle={{ margin: 0, padding: '1rem', background: 'transparent' }}
+        codeTagProps={{ style: { background: 'transparent' } }}
+      >
+        {codeString}
+      </SyntaxHighlighter>
+    </div>
+  ) : (
+    <code className="text-sm bg-muted/50 text-foreground rounded-sm px-1 py-0.5">{children}</code>
+  );
+}
+
 
 function ChatInterface({ persona }) {
   const chatContainerRef = useRef(null);
@@ -42,7 +83,6 @@ function ChatInterface({ persona }) {
     setMessages(newMessages);
     setInput('');
 
-    // Simplified logic: Always use the server API route
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -52,25 +92,17 @@ function ChatInterface({ persona }) {
       }),
     });
 
-    if (!response.body) {
-      // You can add an error message to the chat here
-      setMessages(prev => [...prev, { id: nanoid(), role: 'assistant', content: 'Sorry, I could not get a response.' }]);
+    if (!response.ok) {
+      const errorData = await response.json();
+      const errorMessage = { id: nanoid(), role: 'assistant', content: errorData.error || "Sorry, an unexpected error occurred." };
+      setMessages(prev => [...prev, errorMessage]);
       setIsLoading(false);
       return;
     }
     
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let assistantResponse = { id: nanoid(), role: 'assistant', content: '' };
+    const responseText = await response.text();
+    const assistantResponse = { id: nanoid(), role: 'assistant', content: responseText };
     setMessages(prev => [...prev, assistantResponse]);
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value);
-      assistantResponse.content += chunk;
-      setMessages(prev => [...prev.slice(0, -1), { ...assistantResponse }]);
-    }
     
     setIsLoading(false);
   };
@@ -95,7 +127,16 @@ function ChatInterface({ persona }) {
                 </Avatar>
                 <div className="flex flex-col">
                   <div className={`max-w-md p-3 rounded-lg border ${msg.role === 'user' ? 'bg-primary/90 text-primary-foreground' : 'dark:bg-slate-800/60 dark:border-slate-700 bg-card/80 backdrop-blur-sm'}`}>
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    <div className="prose prose-sm dark:prose-invert max-w-none"> 
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        code: MarkdownCodeBlock,
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               </div>
